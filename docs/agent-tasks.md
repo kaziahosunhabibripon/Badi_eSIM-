@@ -153,57 +153,16 @@ POST is still there after restarting the server.
 
 ---
 
-# Part B - JWT authentication and frontend
+# Part B - Frontend (demo identity, no JWT)
 
 Precondition for all of Part B: Part A finished and green.
 
-## B1 - JWT authentication (optional bonus; replaces the X-User-Id demo identity)
+## B1 - SKIPPED: JWT authentication
 
-Auth is an optional bonus in the docx (role-based access), so keep it small.
-
-- B1.1 Add PyJWT and bcrypt (or `pwdlib[argon2]`) to `requirements.txt`. Do not use passlib (unmaintained).
-- B1.2 Config (`core/config.py`, `.env`, `.env.example`): `JWT_SECRET` (required, at least 32 characters;
-  `.env.example` holds a placeholder; the app refuses to start with a readable message, same style as
-  `db_check`, if it is missing, shorter than 32 or still the placeholder), `JWT_ALGORITHM=HS256`,
-  `ACCESS_TOKEN_EXPIRE_MINUTES=60`. Put a real random secret in the local `.env`
-  (`python -c "import secrets; print(secrets.token_urlsafe(48))"`). Never log or return it.
-- B1.3 New Alembic revision: `users.password_hash` String(255), NULLABLE. Users created implicitly by an
-  agent's ticket (find-or-create) have NULL and cannot log in; document this known limitation (real
-  systems invite the customer by e-mail). `password_hash` never appears in a response schema or a log.
-- B1.4 `app/core/security.py`: `hash_password`, `verify_password`, `create_access_token(user)` with claims
-  `sub` (user id as string), `iat`, `exp` and `role` (informational only), `decode_access_token`
-  distinguishing expired from invalid. Authorization NEVER trusts the role claim: load the user from the
-  database on every request, so a role change or a removed user takes effect at once.
-- B1.5 Endpoints (root paths): `POST /auth/login {email,password}` ->
-  `{access_token, token_type:"bearer", user:{id,name,email,role}}`; `GET /auth/me` -> current user. Every
-  login failure is 401 `INVALID_CREDENTIALS` with the same generic message (unknown e-mail, wrong
-  password, NULL hash); for an unknown e-mail still run a dummy hash verification so response time does
-  not reveal which e-mails exist. Optional: `POST /auth/register` for customers (role forced to CUSTOMER,
-  password at least 8 characters, 409 if the e-mail exists).
-- B1.6 `deps.py`: replace X-User-Id with `Authorization: Bearer <token>` (`HTTPBearer(auto_error=False)`
-  so errors keep our shape). Missing -> 401 `NOT_AUTHENTICATED`; bad signature or format -> 401
-  `INVALID_TOKEN`; expired -> 401 `TOKEN_EXPIRED`; each with a `WWW-Authenticate: Bearer` header and the
-  standard error body. Remove the X-User-Id header, `GET /demo/users` and the `DEMO_MODE` setting
-  entirely. Keep `GET /users?role=` (agents only).
-- B1.7 WebSocket: browsers cannot set headers, and tokens in URLs end up in access logs, so authenticate
-  with a first message. After accept, the client must send `{"type":"auth","token":"<jwt>"}` within 5
-  seconds; validate the token, load the user, check ticket access, and only then register the connection
-  with the manager; otherwise close with 1008. Remove the `?user_id=` parameter.
-- B1.8 Seed: every seeded user gets a password hash; one documented demo-only password for all seeded
-  accounts; print the e-mail/role table at the end of `seed.py`.
-- B1.9 Tests on the real PostgreSQL test DB: login ok / wrong password / unknown e-mail (identical
-  response); no token, malformed, tampered and expired token (build one with a negative expiry) give the
-  right 401 codes; a token for a user that no longer exists -> 401; a customer token cannot do agent
-  actions (403) nor read another customer's ticket (404); websocket: no auth message -> closed, customer
-  token on someone else's ticket -> closed, valid token receives `message.created`. Move all existing
-  tests from X-User-Id to tokens through ONE fixture.
-- B1.10 README: auth section (flow, env vars, demo accounts, token lifetime, no refresh tokens, secret
-  handling, limitations) and remove the X-User-Id/demo text. Record in the trade-offs that plan §6/§39
-  (no passwords, demo identity) was superseded by this optional bonus.
-
-VERIFY: pytest green; `alembic upgrade head` and `alembic check` clean on a fresh database; curl login,
-then `GET /auth/me` and `GET /tickets` with the token; a tampered token -> 401 `INVALID_TOKEN`; the app
-refuses to start without `JWT_SECRET`. Paste real output.
+Decided against: the docx lists authentication/role-based access as an optional bonus, not a
+requirement, and the backend's demo identity (`X-User-Id`, `GET /users/demo`) already lets every
+role-sensitive rule be exercised and tested. B3 below builds the frontend's identity picker directly
+on top of that instead of a real login. Revisit only if asked.
 
 ## B2 - Frontend: initialize the project (no real screens yet)
 
@@ -214,7 +173,7 @@ Create `frontend/` at the repo root (React + TypeScript + Vite).
   variables (readable, responsive down to about 900px). TypeScript strict; `npm run build` and
   `npm run lint` must pass.
 - B2.2 Structure per plan §21: `src/api`, `components`, `pages`, `hooks`, `types`, `utils`, `App.tsx`,
-  `main.tsx`. Routes: `/login`, `/tickets`, `/tickets/new`, `/tickets/:id` (placeholders).
+  `main.tsx`. Routes: `/choose-identity`, `/tickets`, `/tickets/new`, `/tickets/:id` (placeholders).
 - B2.3 `src/types` match `backend/app/schemas` exactly: `TicketStatus`, `TicketPriority`,
   `TicketCategory`, `MessageType` as string-literal unions; `User`, `Ticket`, `TicketDetail` (messages,
   events), `TicketListResponse`, `ErrorResponse`; plus constant arrays of statuses, priorities and
@@ -222,11 +181,11 @@ Create `frontend/` at the repo root (React + TypeScript + Vite).
   if it works cleanly, otherwise hand-write; the types must not drift from the backend.
 - B2.4 `src/api/http.ts` is the only place that calls `fetch`: base URL from `VITE_API_BASE_URL` (default
   `http://127.0.0.1:8000`, documented in `frontend/.env.example`); JSON in/out; attaches
-  `Authorization: Bearer <token>` when a token exists; converts the backend error body
-  `{"error":{code,message,details}}` into `ApiError(code, message, status)`; a network failure becomes
-  `ApiError("NETWORK_ERROR", "Cannot reach the server. Check that the API is running.")`; on 401 calls a
-  registered `onUnauthorized` callback (wired in B3). Thin typed modules `api/tickets.ts`, `users.ts`,
-  `orders.ts`, `auth.ts` with no UI code.
+  `X-User-Id: <id>` (the demo identity, plan section 39) when one is selected; converts the backend error
+  body `{"error":{code,message,details}}` into `ApiError(code, message, status)`; a network failure
+  becomes `ApiError("NETWORK_ERROR", "Cannot reach the server. Check that the API is running.")`; on 401
+  calls a registered `onUnauthorized` callback (wired in B3). Thin typed modules `api/tickets.ts`,
+  `users.ts`, `orders.ts` with no UI code.
 - B2.5 `src/utils`: `formatDateTime`, `relativeTime` (absolute time in a `title` attribute), `classNames`.
 - B2.6 The placeholder home page calls `GET /health` and shows OK or an error state, proving CORS and the
   base URL from `http://localhost:5173`.
@@ -236,27 +195,38 @@ Create `frontend/` at the repo root (React + TypeScript + Vite).
 VERIFY: `npm run build` and `npm run lint` output; `npm run dev` with the health call working in the
 browser (describe what you saw).
 
-## B3 - Frontend: login and role-aware routing
+## B3 - Frontend: identity picker and role-aware routing (no JWT - see B1)
 
-- B3.1 `AuthContext` + `useAuth` holding `{token, user}`: `login(email, password)` -> `POST /auth/login`;
-  `logout()`; on load restore the session from `sessionStorage` (chosen over `localStorage` so the token
-  dies with the tab; note in the README that httpOnly cookies would be better in production) and
-  validate it with `GET /auth/me`. Register the `http.ts` `onUnauthorized` callback to log out and go to
-  `/login` with "Your session expired."
-- B3.2 Login page: labelled e-mail and password, client validation (e-mail format, non-empty), button
-  disabled with "Signing in..." while loading, API error shown visibly (`INVALID_CREDENTIALS` as one
-  generic message), Enter submits, focus moves to the first invalid field. A collapsible "Demo accounts"
-  box lists the seeded e-mails and the demo password from the README, shown only when
-  `VITE_SHOW_DEMO_ACCOUNTS=true` (default true in `.env.example`).
-- B3.3 `RequireAuth` wrapper: no session -> `/login`, and return to the target page after login. Layout
-  with a top bar: app name, user name + role badge, Logout. After login both roles land on `/tickets`
-  (the list differs by role in B4).
+There is no password and no token. "Signing in" means picking one of the seeded demo users; the
+backend trusts whatever id travels in `X-User-Id` (plan section 39), so this picker is explicitly
+labelled as a demo mechanism, not dressed up to look like real authentication.
+
+- B3.1 `IdentityContext` + `useIdentity` holding `{user}` (the full user object: id, name, email, role -
+  no token, there is nothing else to hold). `selectIdentity(user)` stores it in `sessionStorage` (chosen
+  over `localStorage` so it dies with the tab) and updates context; `clearIdentity()` removes it. On load,
+  restore from `sessionStorage` and re-validate by calling `GET /tickets?page_size=1` (or similar) with
+  that id's header - if it comes back 401 (the seeded user no longer exists), clear it instead of trusting
+  a stale id. Register `http.ts`'s `onUnauthorized` callback to clear the identity and redirect to
+  `/choose-identity` with "That identity is no longer valid - please choose again."
+- B3.2 `/choose-identity` page: calls `GET /users/demo` (no auth needed) and lists the seeded users as two
+  groups, "Agents" and "Customers" (name + e-mail per row), each a button that calls `selectIdentity` and
+  navigates to `/tickets`. Loading/error/empty states like any other list (B4.4's pattern). A one-line
+  notice on the page states plainly that this is a demo identity picker standing in for login, because
+  authentication is out of scope for this assignment - do not word it to look like a real sign-in form.
+  If `GET /users/demo` ever returns 404 (`DEMO_MODE=false` on the backend), show "No demo accounts are
+  available. Ask an administrator for your user id and set VITE_MANUAL_USER_ID." as a fallback path
+  (a small dev-only input that calls `selectIdentity` with a hand-typed id) rather than a dead end.
+- B3.3 `RequireIdentity` wrapper: no identity selected -> `/choose-identity`, and return to the target
+  page after selecting one. Layout with a top bar: app name, current user's name + role badge, "Switch
+  identity" (calls `clearIdentity` and navigates to `/choose-identity`). After selecting an identity both
+  roles land on `/tickets` (the list differs by role in B4).
 - B3.4 Role helper `isAgent(user)` in one place. The UI hides agent-only controls, but the backend is the
   authority: every 403/404 from the API shows a clear message, never a silent failure.
 
-VERIFY: build/lint; log in as a seeded agent and as a seeded customer; a wrong password shows the
-generic error; removing the token in devtools and reloading goes to `/login`; an invalid or expired
-token on any API call logs you out. Describe the results.
+VERIFY: build/lint; pick a seeded agent and, separately, a seeded customer, and confirm `/tickets` differs
+per B4; removing the stored identity in devtools and reloading goes to `/choose-identity`; a 401 from any
+API call (simulate by editing the stored id to a number that does not exist) clears the identity and
+redirects with the message above. Describe the results.
 
 ## B4 - Frontend: ticket list with filters
 
@@ -331,14 +301,17 @@ and as an agent.
 
 ## B7 - Frontend: real-time conversation (docx core requirement)
 
-- B7.1 `useTicketSocket(ticketId, onMessage)`: open `ws(s)://<API host>/tickets/{id}/ws` (derived from
-  `VITE_API_BASE_URL`); on open immediately send `{"type":"auth","token":<jwt>}`; handle
-  `{"event":"message.created","ticket_id","message":{...}}`: ignore other tickets and unknown events,
-  dedupe by message id (the sender also gets the HTTP response), append in order. Clean up on unmount and
-  when `ticketId` changes.
+- B7.1 `useTicketSocket(ticketId, onMessage)`: open
+  `ws(s)://<API host>/tickets/{id}/ws?user_id=<current identity's id>` (derived from
+  `VITE_API_BASE_URL`; the id comes from `IdentityContext` - the backend cannot read a header on a
+  WebSocket handshake, which is why the id travels in the query string here instead of `X-User-Id`).
+  Handle `{"event":"message.created","ticket_id","message":{...}}`: ignore other tickets and unknown
+  events, dedupe by message id (the sender also gets the HTTP response), append in order. Clean up on
+  unmount and when `ticketId` or the current identity changes.
 - B7.2 Reconnect with exponential backoff (1s, 2s, 4s ... max 15s, reset on success); after a reconnect
-  refetch the ticket so nothing sent meanwhile is missed. If the server closes with 1008 (auth/access),
-  do not retry: log out on an expired token, otherwise show "You no longer have access."
+  refetch the ticket so nothing sent meanwhile is missed. If the server closes with 1008 (unknown user or
+  no access to this ticket - the backend is fail-closed here, plan section 27), do not retry: show "You do
+  not have access to this ticket." and do not reconnect until `ticketId` or the identity changes.
 - B7.3 A small connection indicator on the detail page: "Live" / "Reconnecting..." / "Offline", with text
   and not colour only.
 - B7.4 Defence in depth: the backend never broadcasts INTERNAL_NOTE, and a customer session must also
@@ -360,12 +333,12 @@ reconnects. Also `npm run build` and lint output.
   filtered-empty messages; `ApiError` mapping of the backend error shape. `npm test` passes.
 - B8.3 Run the 26 scenarios of plan §56 by hand against the seeded data and record each pass/fail with
   notes in `docs/QA.md`. Be honest about failures.
-- B8.4 README: replace the Frontend TODO with setup, running backend + frontend together, env vars, demo
-  accounts, folder structure, the data flow (pages -> hooks -> api -> backend), the front-end trade-offs
-  (sessionStorage token, no state library, URL-synced filters, in-process WebSocket) and what you would
-  improve.
-- B8.5 Git: commit the frontend in logical commits (`chore: init frontend`, `feat: auth`, `feat: ticket
-  list`, `feat: ticket detail and composer`, `feat: agent controls and create ticket`, `feat: realtime`,
-  `test/docs`) only when build, lint and tests pass; no push.
+- B8.4 README: replace the Frontend TODO with setup, running backend + frontend together, env vars, the
+  demo identity picker, folder structure, the data flow (pages -> hooks -> api -> backend), the front-end
+  trade-offs (sessionStorage identity instead of real auth, no state library, URL-synced filters,
+  in-process WebSocket) and what you would improve.
+- B8.5 Git: commit the frontend in logical commits (`chore: init frontend`, `feat: identity picker and
+  routing`, `feat: ticket list`, `feat: ticket detail and composer`, `feat: agent controls and create
+  ticket`, `feat: realtime`, `test/docs`) only when build, lint and tests pass; no push.
 
 VERIFY: paste the build/lint/test output and the `docs/QA.md` table.

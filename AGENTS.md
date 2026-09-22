@@ -80,17 +80,17 @@ The user names a step ("do A2", "do B3"). Then:
 - [x] A2 Match the assignment contract
 - [x] A3 Correctness and quality
 - [x] A4 Submission material (no frontend)
-- [ ] B1 JWT authentication (optional bonus; replaces the X-User-Id demo identity)
+- [x] B1 SKIPPED: JWT authentication (docx lists auth as an optional bonus, not required; decided against)
 - [ ] B2 Frontend: initialize
-- [ ] B3 Frontend: login and role-aware routing
+- [ ] B3 Frontend: identity picker and role-aware routing (demo identity, no JWT)
 - [ ] B4 Frontend: ticket list with filters
 - [ ] B5 Frontend: ticket detail, conversation, composer
 - [ ] B6 Frontend: agent controls and ticket creation
 - [ ] B7 Frontend: real-time conversation
 - [ ] B8 Frontend: QA, tests, submission notes
 
-Order: A0 to A4 first (B1 needs A finished and green). B1 may be skipped; then skip B3 as well and use
-the demo identity (X-User-Id, GET /users/demo) in the frontend instead. Ask the user before skipping.
+Order: A0 to A4 first, done. B1 (JWT) is skipped - the frontend uses the demo identity (X-User-Id,
+GET /users/demo) throughout instead, per B3 in docs/agent-tasks.md.
 
 ## 5. Step details
 

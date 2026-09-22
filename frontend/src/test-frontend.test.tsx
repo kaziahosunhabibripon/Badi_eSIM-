@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { TicketDetailPage } from "./pages/TicketDetailPage";
 import { CreateTicketPage } from "./pages/CreateTicketPage";
 import { TicketListPage } from "./pages/TicketListPage";
@@ -20,16 +20,12 @@ vi.mock("./api/users", () => ({ listUsers: vi.fn().mockResolvedValue([]) }));
 
 import { useIdentity } from "./hooks/useIdentity";
 import { getTicket, addMessage, createTicket, listTickets } from "./api/tickets";
-import { getMockOrder } from "./api/orders";
-import { listUsers } from "./api/users";
 
 const mockedUseIdentity = vi.mocked(useIdentity);
 const mockGetTicket = vi.mocked(getTicket);
 const mockAddMessage = vi.mocked(addMessage);
 const mockCreateTicket = vi.mocked(createTicket);
 const mockListTickets = vi.mocked(listTickets);
-const mockGetMockOrder = vi.mocked(getMockOrder);
-const mockListUsers = vi.mocked(listUsers);
 
 const mockUserAgent: User = {
   id: 1,
@@ -83,6 +79,10 @@ function renderWithIdentity(ui: React.ReactNode, user: User | null = mockUserAge
   return render(ui, { wrapper: MemoryRouter });
 }
 
+function present(el: HTMLElement | null | undefined): boolean {
+  return el !== null && el !== undefined;
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -91,15 +91,15 @@ describe("Composer: internal-note toggle hidden for customers", () => {
   it("hides the toggle when the user is a customer", async () => {
     mockGetTicket.mockResolvedValue(createTicketDetail());
     renderWithIdentity(<TicketDetailPage />, mockUserCustomer);
-    await waitFor(() => expect(screen.queryByText("Loading ticket...")).not.toBeInTheDocument());
-    expect(screen.queryByText("Internal note")).toBeNull();
+    await waitFor(() => expect(present(screen.queryByText("Loading ticket..."))).toBe(false));
+    expect(present(screen.queryByText("Internal note"))).toBe(false);
   });
 
   it("shows the toggle when the user is an agent", async () => {
     mockGetTicket.mockResolvedValue(createTicketDetail());
     renderWithIdentity(<TicketDetailPage />, mockUserAgent);
-    await waitFor(() => expect(screen.queryByText("Loading ticket...")).not.toBeInTheDocument());
-    expect(screen.getByText("Internal note")).toBeInTheDocument();
+    await waitFor(() => expect(present(screen.queryByText("Loading ticket..."))).toBe(false));
+    expect(present(screen.getByText("Internal note"))).toBe(true);
   });
 });
 
@@ -116,9 +116,9 @@ describe("Composer: message_type on send", () => {
       created_at: "2026-01-01T00:00:00Z",
     } as any);
     renderWithIdentity(<TicketDetailPage />, mockUserAgent);
-    await waitFor(() => expect(screen.getByText("Internal note")).toBeInTheDocument());
+    await waitFor(() => expect(present(screen.getByText("Internal note"))).toBe(true));
     fireEvent.click(screen.getByText("Internal note"));
-    await waitFor(() => expect(screen.getByLabelText("Internal note")).toBeInTheDocument());
+    await waitFor(() => expect(present(screen.getByLabelText("Internal note"))).toBe(true));
   });
 });
 
@@ -126,10 +126,10 @@ describe("Agent status dropdown: only allowed next states", () => {
   it("shows current status and only allowed transitions", async () => {
     mockGetTicket.mockResolvedValue(createTicketDetail({ status: "IN_PROGRESS" }));
     renderWithIdentity(<TicketDetailPage />, mockUserAgent);
-    await waitFor(() => expect(screen.getByLabelText("Status")).toBeInTheDocument());
+    await waitFor(() => expect(present(screen.getByLabelText("Status"))).toBe(true));
     const select = screen.getByLabelText("Status");
     const options = Array.from(select.querySelectorAll("option")).map(
-      (o) => (o as HTMLInputElement).value
+      (o) => (o as unknown as HTMLInputElement).value
     );
     expect(options).toContain("IN_PROGRESS");
     expect(options).toContain("WAITING_FOR_CUSTOMER");
@@ -151,12 +151,12 @@ describe("Ticket list: error state", () => {
     });
     renderWithIdentity(<TicketListPage />, mockUserAgent);
     await waitFor(() => {
-      expect(screen.getByText("Unable to load tickets.")).toBeInTheDocument();
+      expect(present(screen.queryByText("Unable to load tickets."))).toBe(true);
     });
-    expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+    expect(present(screen.getByRole("button", { name: "Try again" }))).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => {
-      expect(screen.queryByText("Unable to load tickets.")).not.toBeInTheDocument();
+      expect(present(screen.queryByText("Unable to load tickets."))).toBe(false);
     });
   });
 });
@@ -172,7 +172,7 @@ describe("Ticket list: empty state", () => {
     });
     renderWithIdentity(<TicketListPage />, mockUserAgent);
     await waitFor(() => {
-      expect(screen.getByText("No tickets found.")).toBeInTheDocument();
+      expect(present(screen.queryByText("No tickets found."))).toBe(true);
     });
   });
 });
@@ -199,8 +199,8 @@ describe("ApiError mapping", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create Ticket" }));
     await waitFor(() => {
       expect(
-        screen.getByText("Customers can only create tickets for their own email address.")
-      ).toBeInTheDocument();
+        present(screen.queryByText("Customers can only create tickets for their own email address."))
+      ).toBe(true);
     });
   });
 });
@@ -208,11 +208,11 @@ describe("ApiError mapping", () => {
 describe("Badges render with text", () => {
   it("StatusBadge shows label text", () => {
     render(<StatusBadge status="OPEN" />);
-    expect(screen.getByText("Open")).toBeInTheDocument();
+    expect(present(screen.queryByText("Open"))).toBe(true);
   });
 
   it("PriorityBadge shows label text", () => {
     render(<PriorityBadge priority="HIGH" />);
-    expect(screen.getByText("High")).toBeInTheDocument();
+    expect(present(screen.queryByText("High"))).toBe(true);
   });
 });

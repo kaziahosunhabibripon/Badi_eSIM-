@@ -1,0 +1,45 @@
+# --- Environment / secrets -------------------------------------------------
+# Never commit real environment files. Only .env.example is committed.
+.env
+.env.*
+!.env.example
+
+# --- Python ----------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# --- Node / React (frontend/) ----------------------------------------------
+node_modules/
+frontend/dist/
+frontend/build/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.eslintcache
+
+# --- Editors / OS ----------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# --- Local artifacts -------------------------------------------------------
+*.sqlite3
+*.db
+*.log
+

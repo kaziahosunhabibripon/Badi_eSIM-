@@ -75,11 +75,11 @@ The user names a step ("do A2", "do B3"). Then:
 
 ## 4. Progress (tick only after VERIFY passed)
 
-- [ ] A0 initialize working state
-- [ ] A1 Security
-- [ ] A2 Match the assignment contract
-- [ ] A3 Correctness and quality
-- [ ] A4 Submission material (no frontend)
+- [x] A0 initialize working state
+- [x] A1 Security
+- [x] A2 Match the assignment contract
+- [x] A3 Correctness and quality
+- [x] A4 Submission material (no frontend)
 - [ ] B1 JWT authentication (optional bonus; replaces the X-User-Id demo identity)
 - [ ] B2 Frontend: initialize
 - [ ] B3 Frontend: login and role-aware routing
@@ -90,7 +90,7 @@ The user names a step ("do A2", "do B3"). Then:
 - [ ] B8 Frontend: QA, tests, submission notes
 
 Order: A0 to A4 first (B1 needs A finished and green). B1 may be skipped; then skip B3 as well and use
-the demo identity (X-User-Id, GET /demo/users) in the frontend instead. Ask the user before skipping.
+the demo identity (X-User-Id, GET /users/demo) in the frontend instead. Ask the user before skipping.
 
 ## 5. Step details
 

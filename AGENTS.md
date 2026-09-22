@@ -80,17 +80,18 @@ The user names a step ("do A2", "do B3"). Then:
 - [x] A2 Match the assignment contract
 - [x] A3 Correctness and quality
 - [x] A4 Submission material (no frontend)
-- [x] B1 SKIPPED: JWT authentication (docx lists auth as an optional bonus, not required; decided against)
+- [ ] B1 JWT authentication (optional bonus; replaces the X-User-Id demo identity)
 - [ ] B2 Frontend: initialize
-- [ ] B3 Frontend: identity picker and role-aware routing (demo identity, no JWT)
+- [ ] B3 Frontend: login and role-aware routing
 - [ ] B4 Frontend: ticket list with filters
 - [ ] B5 Frontend: ticket detail, conversation, composer
 - [ ] B6 Frontend: agent controls and ticket creation
 - [ ] B7 Frontend: real-time conversation
 - [ ] B8 Frontend: QA, tests, submission notes
 
-Order: A0 to A4 first, done. B1 (JWT) is skipped - the frontend uses the demo identity (X-User-Id,
-GET /users/demo) throughout instead, per B3 in docs/agent-tasks.md.
+Order: A0 to A4 first, done. B1 (JWT) next - it changes deps.py, the WebSocket route and the seed
+script, so the frontend (B2-B8) is built against the real login flow from the start rather than
+retrofitted onto a demo-identity UI later.
 
 ## 5. Step details
 

@@ -247,9 +247,52 @@ simulated database outage answering `503`.
 
 ## Frontend
 
-**Not built yet.** The assignment's core and bonus requirements were prioritized
-backend-first: a correct, tested, migration-backed API with realtime support, in line
-with the assignment's own evaluation weighting (schema + API + workflow/audit +
-structure + testing together outweigh the frontend). The API above is complete and can
-be exercised directly (`/docs`, `curl`, Postman) or from a frontend built against it
-next.
+The frontend is built with React + TypeScript + Vite and lives in `frontend/`.
+
+### Setup
+
+```bash
+cd frontend
+npm install
+cp .env.example .env    # sets VITE_API_BASE_URL (default: http://127.0.0.1:8000)
+```
+
+### Running
+
+```bash
+npm run dev     # dev server on http://localhost:5173
+npm run build   # production build to frontend/dist
+npm run lint    # oxlint
+npm test        # vitest (9 tests, React Testing Library + jsdom)
+```
+
+### Demo identity
+
+There is no real authentication. The frontend uses the backend's demo identity:
+- Pick a user on `/choose-identity` (backed by `GET /users/demo`, no auth)
+- The chosen user's id is sent as `X-User-Id` on every API request
+- "Switch identity" in the top bar clears the session and returns to the picker
+- A notice on the picker page states plainly that this is a demo mechanism
+
+### Data flow
+
+Pages → hooks → `api/` modules → backend. `useIdentity` holds the current user;
+`useTickets` handles list loading/filtering; `useTicketSocket` manages the
+WebSocket connection; `Toast` provides aria-live notices.
+
+### Routes
+
+| Route | Page |
+|---|---|
+| `/choose-identity` | Demo identity picker |
+| `/tickets` | Ticket list with URL-synced filters |
+| `/tickets/new` | Create ticket form |
+| `/tickets/:id` | Ticket detail, conversation, agent controls |
+
+### Trade-offs
+
+- **sessionStorage** for identity (cleared when tab closes; no localStorage pollution)
+- **No state library** — React state + URL query params only
+- **In-process WebSocket** — same as backend; no Redis pub/sub
+- **Debounced search** (300 ms) on the list page
+- Agent-only controls (status/priority/assignee/history) are conditionally rendered; the backend is the authority on permissions

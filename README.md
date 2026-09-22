@@ -6,7 +6,7 @@ priority; every important change is recorded in an audit trail; customer-visible
 replies update live, in both directions, without a page refresh.
 
 This is the backend for the Badi eSIM Full Stack Developer interview assignment
-(`Support_Ticketing_Interview_Assignment-1.docx`). `plan.md` is the implementation plan
+(`Support_Ticketing_Interview_Assignment-1.pdf`). `plan.md` is the implementation plan
 derived from it; `AGENTS.md` and `docs/agent-tasks.md` record the working plan used
 while building and reviewing this codebase with AI coding assistants.
 

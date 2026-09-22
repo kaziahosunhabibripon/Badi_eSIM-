@@ -11,7 +11,7 @@ change is audited. Customer-visible replies update live in both directions witho
 
 - Stack: Python / FastAPI / SQLAlchemy 2 / Alembic / PostgreSQL backend; React + TypeScript (Vite)
   frontend in `frontend/` (created in step B2).
-- Sources of truth, in order: `Support_Ticketing_Interview_Assignment-1.docx` (the requirements) >
+- Sources of truth, in order: `Support_Ticketing_Interview_Assignment-1.pdf` (the requirements) >
   `plan.md` (our derived plan; "§n" means its section n) > this file. If they disagree, the docx wins:
   say so instead of silently picking one. Do not edit `plan.md` unless the user asks.
 - Layout: `backend/app/{api,core,models,repositories,schemas,services,websocket}`, `backend/tests`,

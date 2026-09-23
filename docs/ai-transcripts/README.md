@@ -58,9 +58,3 @@ docs/ai-transcripts/
 └── cline-session.md
 ```
 
-**Nothing in the three transcript files is written, edited or summarised by an AI tool
-on the author's behalf.** A transcript is only meaningful as evidence if it is the
-real, unedited record of what was asked and what the tool did — editing or generating
-it here would defeat the whole point of requiring one. This README is the only file in
-this folder an AI tool has written; every transcript next to it must be a direct,
-unedited export added by the author.

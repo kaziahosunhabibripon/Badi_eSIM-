@@ -23,6 +23,10 @@ while building and reviewing this codebase with AI coding assistants.
 
 ## Contents
 
+- [Quick start (run everything)](#quick-start-run-everything)
+- [Architecture](#architecture)
+- [Project structure](#project-structure)
+- [Realtime message flow](#realtime-message-flow)
 - [Prerequisites](#prerequisites)
 - [Setup](#setup)
 - [Running the API](#running-the-api)
@@ -35,6 +39,137 @@ while building and reviewing this codebase with AI coding assistants.
 - [Known limitations](#known-limitations)
 - [What I would improve with more time](#what-i-would-improve-with-more-time)
 - [Frontend](#frontend)
+
+## Quick start (run everything)
+
+Two servers, run in two terminals. Both need PostgreSQL already running locally.
+
+```bash
+# Terminal 1 — backend (from the repository root)
+python -m venv .venv && source .venv/Scripts/activate   # PowerShell: .venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+cp .env.example .env                                     # edit if your PostgreSQL credentials differ
+psql -U postgres -c "CREATE DATABASE badi_support;"
+psql -U postgres -c "CREATE DATABASE badi_support_test;"
+python -m alembic -c alembic.ini upgrade head
+cd backend && python seed.py                              # prints seeded user ids
+python run.py                                             # -> http://127.0.0.1:8000  (docs: /docs)
+```
+
+```bash
+# Terminal 2 — frontend (from the repository root)
+cd frontend
+npm install
+cp .env.example .env                                      # VITE_API_BASE_URL, default http://127.0.0.1:8000
+npm run dev                                                # -> http://localhost:5173
+```
+
+Open `http://localhost:5173`, pick a seeded user on the identity picker (agent or
+customer), and use the app. See [Setup](#setup) / [Running the API](#running-the-api) /
+[Frontend](#frontend) below for the full detail behind each step (env vars, `--reset`
+seeding, test databases, build/lint/test commands, etc.).
+
+## Architecture
+
+```mermaid
+flowchart TB
+    subgraph Client["Browser"]
+        Agent["Agent"]
+        Customer["Customer"]
+    end
+
+    subgraph Frontend["frontend/ — React + TypeScript + Vite + Tailwind"]
+        Pages["Pages & components<br/>TicketListPage · TicketDetailPage · ChooseIdentity ·<br/>CustomersPage · CreateTicketModal"]
+        Hooks["Hooks<br/>useIdentity · useTickets · useTicketSocket"]
+        ApiClient["api/<br/>http.ts · tickets.ts · users.ts · orders.ts"]
+    end
+
+    subgraph Backend["backend/ — FastAPI"]
+        Routes["api/routes/<br/>tickets · messages · users · mock_orders · websocket"]
+        Deps["api/deps.py<br/>resolves X-User-Id → User"]
+        Services["services/<br/>TicketService · MessageService · AuditService"]
+        Repos["repositories/<br/>TicketRepository"]
+        WS["websocket/manager.py<br/>in-process connection registry"]
+    end
+
+    DB[("PostgreSQL<br/>badi_support")]
+
+    Agent --> Pages
+    Customer --> Pages
+    Pages --> Hooks
+    Hooks --> ApiClient
+    ApiClient -- "REST, X-User-Id header" --> Routes
+    Hooks -- "WebSocket, ?user_id=" --> WS
+    Routes --> Deps
+    Routes --> Services
+    Services --> Repos
+    Services -- "REPLY only, never INTERNAL_NOTE" --> WS
+    Repos --> DB
+    WS -. "message.created (live push)" .-> Hooks
+```
+
+The backend is the single authority on permissions and business rules (status
+transitions, who can see what, internal-note visibility); the frontend only presents
+the choices the backend allows and re-checks nothing on its own.
+
+## Project structure
+
+```
+badisms/
+├── backend/
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── deps.py            # resolves the caller from X-User-Id
+│   │   │   └── routes/            # tickets, messages, users, mock_orders, websocket
+│   │   ├── core/                  # config, database session, exceptions
+│   │   ├── models/                # SQLAlchemy: User, Ticket, TicketMessage, TicketEvent
+│   │   ├── repositories/          # query layer (TicketRepository)
+│   │   ├── schemas/                # Pydantic request/response shapes
+│   │   ├── services/               # business rules + the one commit per write
+│   │   │                            # (TicketService, MessageService, AuditService)
+│   │   ├── websocket/manager.py   # in-process connection registry, REPLY-only fan-out
+│   │   └── main.py                # FastAPI app, CORS, error handlers, lifespan DB check
+│   ├── tests/                     # pytest, real PostgreSQL (badi_support_test)
+│   ├── seed.py                    # demo agents/customers/tickets
+│   └── run.py                     # checks DB, then starts uvicorn
+├── alembic/ , alembic.ini         # migrations (run from the repo root)
+├── frontend/
+│   └── src/
+│       ├── api/                   # http.ts (fetch + X-User-Id), tickets/users/orders
+│       ├── components/            # StatusBadge, PriorityBadge, Toast, CreateTicketModal
+│       │   └── ui/                # Button, Select, Modal — shared primitives
+│       ├── hooks/                 # useIdentity (Context), useTickets, useTicketSocket
+│       ├── pages/                 # ChooseIdentity, TicketListPage, TicketDetailPage,
+│       │                          # CustomersPage
+│       ├── App.tsx                # routes + AppShell (sidebar, header, mobile drawer)
+│       └── types/                 # shared TypeScript types, mirroring the API schemas
+└── docs/                          # agent-tasks.md, frontend-design-spec.md, ai-transcripts/
+```
+
+## Realtime message flow
+
+```mermaid
+sequenceDiagram
+    participant C as Customer (browser)
+    participant A as Agent (browser)
+    participant Route as Ticket API (POST /tickets/:id/messages)
+    participant MS as MessageService
+    participant DB as PostgreSQL
+    participant WS as WebSocket manager
+
+    C->>WS: connect /tickets/1/ws?user_id=4
+    A->>WS: connect /tickets/1/ws?user_id=1
+    A->>Route: message_type=REPLY, body="..."
+    Route->>MS: create_message(...)
+    MS->>DB: INSERT message, UPDATE ticket.updated_at
+    DB-->>MS: saved
+    MS-->>Route: message
+    Route-->>A: 201 Created
+    MS->>WS: broadcast(ticket_id=1, message)
+    WS-->>C: message.created (live, no refresh)
+    WS-->>A: message.created (own message echoed back)
+    Note over MS,WS: an INTERNAL_NOTE message is never passed to<br/>the WebSocket manager — customers can never receive one
+```
 
 ## Prerequisites
 
@@ -274,24 +409,36 @@ There is no real authentication. The frontend uses the backend's demo identity:
 - "Switch identity" in the top bar clears the session and returns to the picker
 - A notice on the picker page states plainly that this is a demo mechanism
 
+### Application shell
+
+`App.tsx` renders `AppShell` (navy sidebar + header) around every authenticated route.
+The sidebar nav is role-aware: agents get **Inbox** (`/tickets`, unfiltered), **My
+Tickets** (`/tickets?assigned_agent_id=<self>`), and **Customers**; customers just get
+**My Tickets** — both point at the same `TicketListPage`, filtered by role server-side.
+"New Ticket" opens `CreateTicketModal` over the current page instead of navigating away.
+
 ### Data flow
 
-Pages → hooks → `api/` modules → backend. `useIdentity` holds the current user;
-`useTickets` handles list loading/filtering; `useTicketSocket` manages the
-WebSocket connection; `Toast` provides aria-live notices.
+Pages → hooks → `api/` modules → backend. `useIdentity` is a React Context (not a plain
+hook) so the header/sidebar update immediately when the identity changes; `useTickets`
+handles list loading/filtering; `useTicketSocket` manages the WebSocket connection;
+`Toast` provides aria-live notices.
 
 ### Routes
 
 | Route | Page |
 |---|---|
-| `/choose-identity` | Demo identity picker |
-| `/tickets` | Ticket list with URL-synced filters |
-| `/tickets/new` | Create ticket form |
+| `/choose-identity` | Demo identity picker (standalone, no AppShell) |
+| `/tickets` | Ticket list; `?assigned_agent_id=`, `?status=`, etc. sync to the URL |
 | `/tickets/:id` | Ticket detail, conversation, agent controls |
+| `/customers` | Agent-only customer directory (`GET /users?role=CUSTOMER`) |
+
+Creating a ticket is a modal (`CreateTicketModal`), not a route.
 
 ### Trade-offs
 
-- **sessionStorage** for identity (cleared when tab closes; no localStorage pollution)
+- **sessionStorage** for identity (cleared when tab closes; no localStorage pollution),
+  restored on load so a page refresh doesn't 401 every request
 - **No state library** — React state + URL query params only
 - **In-process WebSocket** — same as backend; no Redis pub/sub
 - **Debounced search** (300 ms) on the list page

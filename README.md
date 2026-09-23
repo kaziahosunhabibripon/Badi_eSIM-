@@ -45,23 +45,21 @@ while building and reviewing this codebase with AI coding assistants.
 Two servers, run in two terminals. Both need PostgreSQL already running locally.
 
 ```bash
-# Terminal 1 — backend (from the repository root)
-python -m venv .venv && source .venv/Scripts/activate   # PowerShell: .venv\Scripts\Activate.ps1
+python -m venv .venv && source .venv/Scripts/activate
 pip install -r requirements.txt
-cp .env.example .env                                     # edit if your PostgreSQL credentials differ
+cp .env.example .env
 psql -U postgres -c "CREATE DATABASE badi_support;"
 psql -U postgres -c "CREATE DATABASE badi_support_test;"
 python -m alembic -c alembic.ini upgrade head
-cd backend && python seed.py                              # prints seeded user ids
-python run.py                                             # -> http://127.0.0.1:8000  (docs: /docs)
+cd backend && python seed.py
+python run.py
 ```
 
 ```bash
-# Terminal 2 — frontend (from the repository root)
 cd frontend
 npm install
-cp .env.example .env                                      # VITE_API_BASE_URL, default http://127.0.0.1:8000
-npm run dev                                                # -> http://localhost:5173
+cp .env.example .env
+npm run dev
 ```
 
 Open `http://localhost:5173`, pick a seeded user on the identity picker (agent or
@@ -119,31 +117,29 @@ badisms/
 ├── backend/
 │   ├── app/
 │   │   ├── api/
-│   │   │   ├── deps.py            # resolves the caller from X-User-Id
-│   │   │   └── routes/            # tickets, messages, users, mock_orders, websocket
-│   │   ├── core/                  # config, database session, exceptions
-│   │   ├── models/                # SQLAlchemy: User, Ticket, TicketMessage, TicketEvent
-│   │   ├── repositories/          # query layer (TicketRepository)
-│   │   ├── schemas/                # Pydantic request/response shapes
-│   │   ├── services/               # business rules + the one commit per write
-│   │   │                            # (TicketService, MessageService, AuditService)
-│   │   ├── websocket/manager.py   # in-process connection registry, REPLY-only fan-out
-│   │   └── main.py                # FastAPI app, CORS, error handlers, lifespan DB check
-│   ├── tests/                     # pytest, real PostgreSQL (badi_support_test)
-│   ├── seed.py                    # demo agents/customers/tickets
-│   └── run.py                     # checks DB, then starts uvicorn
-├── alembic/ , alembic.ini         # migrations (run from the repo root)
+│   │   │   ├── deps.py
+│   │   │   └── routes/
+│   │   ├── core/
+│   │   ├── models/
+│   │   ├── repositories/
+│   │   ├── schemas/
+│   │   ├── services/
+│   │   ├── websocket/manager.py
+│   │   └── main.py
+│   ├── tests/
+│   ├── seed.py
+│   └── run.py
+├── alembic/ , alembic.ini
 ├── frontend/
 │   └── src/
-│       ├── api/                   # http.ts (fetch + X-User-Id), tickets/users/orders
-│       ├── components/            # StatusBadge, PriorityBadge, Toast, CreateTicketModal
-│       │   └── ui/                # Button, Select, Modal — shared primitives
-│       ├── hooks/                 # useIdentity (Context), useTickets, useTicketSocket
-│       ├── pages/                 # ChooseIdentity, TicketListPage, TicketDetailPage,
-│       │                          # CustomersPage
-│       ├── App.tsx                # routes + AppShell (sidebar, header, mobile drawer)
-│       └── types/                 # shared TypeScript types, mirroring the API schemas
-└── docs/                          # agent-tasks.md, frontend-design-spec.md, ai-transcripts/
+│       ├── api/
+│       ├── components/
+│       │   └── ui/
+│       ├── hooks/
+│       ├── pages/
+│       ├── App.tsx
+│       └── types/
+└── docs/
 ```
 
 ## Realtime message flow
@@ -179,29 +175,44 @@ sequenceDiagram
 
 ## Setup
 
+**1. Virtual environment and dependencies**
+
 ```bash
-# 1. Virtual environment and dependencies
 python -m venv .venv
-# bash:
-source .venv/Scripts/activate      # Windows Git Bash / WSL: source .venv/bin/activate
-# PowerShell:
-.venv\Scripts\Activate.ps1
+source .venv/Scripts/activate
+```
 
+PowerShell: `.venv\Scripts\Activate.ps1`. Windows Git Bash / WSL: `source .venv/bin/activate`.
+
+```bash
 pip install -r requirements.txt
+```
 
-# 2. Configuration
+**2. Configuration**
+
+```bash
 cp .env.example .env
-# edit .env if your PostgreSQL user/password/host differ from the default
-# (postgres/root@localhost:5432) - see .env.example for every variable.
+```
 
-# 3. Databases (two: one for the app, one dedicated to the test suite)
+Edit `.env` if your PostgreSQL user/password/host differ from the default
+(`postgres`/`root`@`localhost:5432`) - see `.env.example` for every variable.
+
+**3. Databases** (two: one for the app, one dedicated to the test suite)
+
+```bash
 psql -U postgres -c "CREATE DATABASE badi_support;"
 psql -U postgres -c "CREATE DATABASE badi_support_test;"
+```
 
-# 4. Schema (from the repository root - alembic.ini lives here, not in backend/)
+**4. Schema** (from the repository root - `alembic.ini` lives here, not in `backend/`)
+
+```bash
 python -m alembic -c alembic.ini upgrade head
+```
 
-# 5. Demo data (from backend/)
+**5. Demo data** (from `backend/`)
+
+```bash
 cd backend
 python seed.py
 ```
@@ -236,8 +247,10 @@ Every request identifies its caller with an `X-User-Id` header naming a seeded u
 id:
 
 ```bash
-curl http://127.0.0.1:8000/tickets -H "X-User-Id: 1"    # 1 = Anas, an agent (after seeding)
+curl http://127.0.0.1:8000/tickets -H "X-User-Id: 1"
 ```
+
+(`1` is Anas, an agent, after seeding.)
 
 - No header, a non-numeric value, or an id that does not exist -> `401`.
 - `GET /users/demo` lists every seeded user (id, name, e-mail, role) with **no**
@@ -318,12 +331,16 @@ as they do in production on PostgreSQL itself. `DATABASE_URL` must point at a da
 whose name ends in `_test` before pytest starts; the suite refuses to even collect a
 test otherwise, so it can never be pointed at `badi_support` by mistake.
 
+bash, from the repository root:
+
 ```bash
-# bash, from the repository root:
 DATABASE_URL=postgresql+psycopg://postgres:root@localhost:5432/badi_support_test \
     python -m pytest backend/tests -q
+```
 
-# PowerShell:
+PowerShell:
+
+```powershell
 $env:DATABASE_URL = "postgresql+psycopg://postgres:root@localhost:5432/badi_support_test"
 python -m pytest backend/tests -q
 ```
@@ -389,17 +406,23 @@ The frontend is built with React + TypeScript + Vite and lives in `frontend/`.
 ```bash
 cd frontend
 npm install
-cp .env.example .env    # sets VITE_API_BASE_URL (default: http://127.0.0.1:8000)
+cp .env.example .env
 ```
+
+`.env` sets `VITE_API_BASE_URL` (default `http://127.0.0.1:8000`).
 
 ### Running
 
 ```bash
-npm run dev     # dev server on http://localhost:5173
-npm run build   # production build to frontend/dist
-npm run lint    # oxlint
-npm test        # vitest (9 tests, React Testing Library + jsdom)
+npm run dev
+npm run build
+npm run lint
+npm test
 ```
+
+`npm run dev` starts the dev server on `http://localhost:5173`. `npm run build`
+produces a production build in `frontend/dist`. `npm run lint` runs oxlint. `npm test`
+runs the vitest suite (React Testing Library + jsdom).
 
 ### Demo identity
 

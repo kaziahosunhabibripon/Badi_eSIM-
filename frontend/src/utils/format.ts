@@ -41,8 +41,6 @@ export function initials(name: string): string {
   return (first + last).toUpperCase();
 }
 
-// Deterministic avatar color per user id, from a small fixed palette (indigo + slate family)
-// so the same person always renders with the same color.
 const AVATAR_PALETTE = [
   { bg: "bg-indigo-100", text: "text-indigo-700" },
   { bg: "bg-slate-200", text: "text-slate-700" },

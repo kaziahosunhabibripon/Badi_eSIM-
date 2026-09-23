@@ -4,8 +4,6 @@ import { cn } from "../../utils/cn";
 
 type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & { selectClassName?: string };
 
-// className sizes the outer wrapper (e.g. "w-full", "w-auto") so it composes correctly as a
-// flex/grid item; the <select> itself always just fills that wrapper.
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(({ className, selectClassName, children, ...rest }, ref) => (
   <div className={cn("relative inline-block", className)}>
     <select

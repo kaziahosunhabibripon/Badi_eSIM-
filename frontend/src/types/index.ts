@@ -152,8 +152,6 @@ export interface LoginResponse {
   user: User;
 }
 
-/* ---- Mock layer types ---- */
-
 export type Ticket = TicketResponse;
 
 export interface TicketDetail {

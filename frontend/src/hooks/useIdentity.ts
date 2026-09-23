@@ -37,9 +37,6 @@ function storeStored(user: IdentityUser | null): void {
 
 const IdentityContext = createContext<IdentityContextValue | null>(null);
 
-// A React Context (not a plain hook) so every consumer shares one state instance -
-// selecting an identity in ChooseIdentity is immediately visible in the app shell's
-// header/sidebar without a full reload.
 export function IdentityProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<IdentityUser | null>(loadStored);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);

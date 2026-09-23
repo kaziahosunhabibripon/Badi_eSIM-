@@ -258,7 +258,6 @@ export function TicketDetailPage() {
         <ChevronLeft size={14} /> Tickets
       </Link>
 
-      {/* Ticket header */}
       <div className="flex flex-wrap items-start justify-between gap-3 pb-4 mb-5 border-b border-slate-200">
         <div>
           <div className="flex items-center gap-3 flex-wrap">
@@ -278,7 +277,6 @@ export function TicketDetailPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: conversation */}
         <div className="lg:col-span-2 space-y-4 min-w-0">
           <div className="bg-white border border-slate-200 rounded-xl p-5">
             <h2 className="text-[13px] font-semibold text-slate-500 uppercase tracking-wide mb-4">Conversation</h2>
@@ -352,7 +350,6 @@ export function TicketDetailPage() {
             </div>
           </div>
 
-          {/* Composer */}
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
             {isAgent && (
               <div className="flex gap-1 px-2.5 pt-2.5">
@@ -402,7 +399,6 @@ export function TicketDetailPage() {
           </div>
         </div>
 
-        {/* Right sidebar */}
         <div className="space-y-4 min-w-0">
           {isAgent && (
             <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3.5">
@@ -466,7 +462,6 @@ export function TicketDetailPage() {
             </div>
           )}
 
-          {/* Ticket info */}
           <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
             <h2 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Customer</h2>
             <InfoRow label="Email" value={ticket.customer_email} />
@@ -474,7 +469,6 @@ export function TicketDetailPage() {
             {ticket.assigned_agent_name && <InfoRow label="Assignee" value={ticket.assigned_agent_name} />}
           </div>
 
-          {/* Order summary */}
           {ticket.order_id && (
             <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
               <h2 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Order {ticket.order_id}</h2>
@@ -491,7 +485,6 @@ export function TicketDetailPage() {
             </div>
           )}
 
-          {/* Audit timeline */}
           {isAgent && ticket.events && ticket.events.length > 0 && (
             <div className="bg-white border border-slate-200 rounded-xl p-4">
               <button
@@ -531,7 +524,6 @@ export function TicketDetailPage() {
             </div>
           )}
 
-          {/* Connection status */}
           <div className="flex items-center gap-2 text-[12.5px] px-1">
             <span className={`w-[6px] h-[6px] rounded-full ${connectionDot}`} aria-hidden />
             <span className={connectionColor}>{connectionLabel}</span>

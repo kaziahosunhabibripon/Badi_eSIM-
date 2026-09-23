@@ -11,8 +11,6 @@ function loadStoredUserId(): number | null {
   }
 }
 
-// Seeded from sessionStorage so a page reload doesn't wipe the identity out from under
-// in-flight requests before useIdentity's own effect has a chance to call setUserId again.
 let _userId: number | null = loadStoredUserId();
 let _onUnauthorized: (() => void) | null = null;
 

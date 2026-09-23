@@ -32,7 +32,6 @@ export function CreateTicketModal({ open, onClose, onCreated }: CreateTicketModa
   const [createdTicket, setCreatedTicket] = useState<string | null>(null);
   const [toasts, setToasts] = useState<Array<{ id: number; message: string; type?: "success" | "error" }>>([]);
 
-  // Fresh form every time the modal opens.
   useEffect(() => {
     if (open) {
       setForm({ ...EMPTY_FORM, customer_email: isAgent ? "" : user?.email ?? "" });

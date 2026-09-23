@@ -83,7 +83,7 @@ export function useTicketSocket({ ticketId, userId, onMessage }: UseTicketSocket
         if (data.message.message_type === "INTERNAL_NOTE") return;
         onMessageRef(data.message);
       } catch {
-        // ignore malformed messages
+        return;
       }
     };
 

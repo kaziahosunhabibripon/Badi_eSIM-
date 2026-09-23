@@ -99,7 +99,6 @@ export function TicketListPage() {
         </Button>
       </div>
 
-      {/* Active filter chips */}
       {activeFilters.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 mb-4">
           {activeFilters.map((f) => (
@@ -128,7 +127,6 @@ export function TicketListPage() {
         </div>
       )}
 
-      {/* Search + filters */}
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <input
@@ -201,7 +199,6 @@ export function TicketListPage() {
         )}
       </div>
 
-      {/* Mobile cards - only when tickets exist */}
       {data && data.tickets.length > 0 && (
         <div className="md:hidden space-y-3">
           {data.tickets.map((t: TicketResponse) => (
@@ -232,7 +229,6 @@ export function TicketListPage() {
         </div>
       )}
 
-      {/* Desktop table */}
       <div className="hidden md:block">
         {loading && <LoadingState text="Loading tickets..." />}
         {error && !loading && <ErrorState message="Unable to load tickets." onRetry={refetch} />}

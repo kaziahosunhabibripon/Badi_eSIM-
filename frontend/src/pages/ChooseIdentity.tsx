@@ -69,7 +69,6 @@ export function ChooseIdentity() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 sm:p-6">
     <div className="flex w-full h-full sm:h-auto sm:max-h-[860px] sm:max-w-[980px] bg-white sm:rounded-2xl sm:border sm:border-slate-200 sm:shadow-sm overflow-hidden">
-      {/* Left brand panel */}
       <div className="hidden lg:flex flex-col justify-between w-[320px] flex-shrink-0 bg-navy text-white p-8 relative overflow-hidden">
         <div className="absolute -top-20 -left-20 w-[280px] h-[280px] rounded-full bg-navy-subtle/70" />
         <div className="absolute bottom-[-100px] right-[-60px] w-[220px] h-[220px] rounded-full bg-[#101828]/80" />
@@ -93,10 +92,8 @@ export function ChooseIdentity() {
         <p className="relative text-xs text-[#5B6785]">© Badi eSIM · Digital Cloud Communications</p>
       </div>
 
-      {/* Right content */}
       <div className="flex-1 flex flex-col px-6 py-10 sm:px-10 sm:py-10 overflow-y-auto">
         <div className="w-full max-w-md mx-auto">
-          {/* Mobile logo */}
           <div className="flex lg:hidden items-center justify-center gap-2.5 mb-8">
             <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
               <span className="text-white text-[15px] font-bold">B</span>

@@ -67,6 +67,23 @@ customer), and use the app. See [Setup](#setup) / [Running the API](#running-the
 [Frontend](#frontend) below for the full detail behind each step (env vars, `--reset`
 seeding, test databases, build/lint/test commands, etc.).
 
+### Docker (alternative to the two-terminal setup above)
+
+```bash
+docker compose up --build
+```
+
+Starts PostgreSQL, the API and the frontend together. API: `http://localhost:8000`.
+Frontend: `http://localhost:5173`. Uses the same host ports as local dev, so don't run
+both at once. The database starts empty; seed it once with:
+
+```bash
+docker compose exec backend sh -c "cd backend && python seed.py"
+```
+
+Migrations run automatically on every `backend` container start. Data persists in a
+named volume (`badi_pgdata`) across restarts; `docker compose down -v` wipes it.
+
 ## Architecture
 
 ```mermaid
@@ -128,17 +145,21 @@ badisms/
 │   │   └── main.py
 │   ├── tests/
 │   ├── seed.py
-│   └── run.py
+│   ├── run.py
+│   └── Dockerfile
 ├── alembic/ , alembic.ini
 ├── frontend/
-│   └── src/
-│       ├── api/
-│       ├── components/
-│       │   └── ui/
-│       ├── hooks/
-│       ├── pages/
-│       ├── App.tsx
-│       └── types/
+│   ├── src/
+│   │   ├── api/
+│   │   ├── components/
+│   │   │   └── ui/
+│   │   ├── hooks/
+│   │   ├── pages/
+│   │   ├── App.tsx
+│   │   └── types/
+│   ├── Dockerfile
+│   └── nginx.conf
+├── docker-compose.yml
 └── docs/
 ```
 

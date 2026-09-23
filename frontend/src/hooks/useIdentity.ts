@@ -1,21 +1,33 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { createContext, createElement, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { setUserId, setOnUnauthorized, apiFetch } from "../api/http";
 
-interface IdentityState {
-  user: { id: number; email: string; name: string; role: string; created_at: string } | null;
+interface IdentityUser {
+  id: number;
+  email: string;
+  name: string;
+  role: string;
+  created_at: string;
 }
 
-function loadStored(): IdentityState["user"] {
+interface IdentityContextValue {
+  user: IdentityUser | null;
+  selectIdentity: (u: IdentityUser) => void;
+  clearIdentity: () => void;
+  errorMsg: string | null;
+  setErrorMsg: (m: string | null) => void;
+}
+
+function loadStored(): IdentityUser | null {
   try {
     const raw = sessionStorage.getItem("demo_user");
     if (!raw) return null;
-    return JSON.parse(raw) as IdentityState["user"];
+    return JSON.parse(raw) as IdentityUser;
   } catch {
     return null;
   }
 }
 
-function storeStored(user: IdentityState["user"]): void {
+function storeStored(user: IdentityUser | null): void {
   if (user) {
     sessionStorage.setItem("demo_user", JSON.stringify(user));
   } else {
@@ -23,8 +35,13 @@ function storeStored(user: IdentityState["user"]): void {
   }
 }
 
-export function useIdentity() {
-  const [user, setUser] = useState<IdentityState["user"]>(loadStored);
+const IdentityContext = createContext<IdentityContextValue | null>(null);
+
+// A React Context (not a plain hook) so every consumer shares one state instance -
+// selecting an identity in ChooseIdentity is immediately visible in the app shell's
+// header/sidebar without a full reload.
+export function IdentityProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<IdentityUser | null>(loadStored);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const mountedRef = useRef(true);
 
@@ -49,15 +66,12 @@ export function useIdentity() {
     };
   }, []);
 
-  const selectIdentity = useCallback(
-    (u: { id: number; email: string; name: string; role: string; created_at: string }) => {
-      setUser(u);
-      storeStored(u);
-      setUserId(u.id);
-      setErrorMsg(null);
-    },
-    []
-  );
+  const selectIdentity = useCallback((u: IdentityUser) => {
+    setUser(u);
+    storeStored(u);
+    setUserId(u.id);
+    setErrorMsg(null);
+  }, []);
 
   const clearIdentity = useCallback(() => {
     setUser(null);
@@ -66,10 +80,17 @@ export function useIdentity() {
     setErrorMsg(null);
   }, []);
 
-  return { user, selectIdentity, clearIdentity, errorMsg, setErrorMsg } as IdentityState & {
-    selectIdentity: (u: IdentityState["user"]) => void;
-    clearIdentity: () => void;
-    errorMsg: string | null;
-    setErrorMsg: (m: string | null) => void;
-  };
+  return createElement(
+    IdentityContext.Provider,
+    { value: { user, selectIdentity, clearIdentity, errorMsg, setErrorMsg } },
+    children
+  );
+}
+
+export function useIdentity(): IdentityContextValue {
+  const ctx = useContext(IdentityContext);
+  if (!ctx) {
+    throw new Error("useIdentity must be used within an IdentityProvider");
+  }
+  return ctx;
 }

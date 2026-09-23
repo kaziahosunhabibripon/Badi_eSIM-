@@ -1,0 +1,50 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+
+  body {
+    @apply bg-slate-25 text-slate-700 antialiased;
+  }
+
+  * {
+    @apply focus-visible:outline-none;
+  }
+
+  :focus-visible {
+    @apply ring-2 ring-indigo-600/40 ring-offset-1 ring-offset-white rounded-sm;
+  }
+
+  ::selection {
+    @apply bg-indigo-100;
+  }
+}
+
+@layer utilities {
+  .bg-slate-25 {
+    background-color: #fafbfc;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

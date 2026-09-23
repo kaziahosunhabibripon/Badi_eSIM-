@@ -16,7 +16,6 @@ export function relativeTime(iso: string | null | undefined): string {
   const then = new Date(iso).getTime();
   const diff = now - then;
   if (diff < 0) return "just now";
-
   const seconds = Math.floor(diff / 1000);
   if (seconds < 60) return "just now";
   const minutes = Math.floor(seconds / 60);

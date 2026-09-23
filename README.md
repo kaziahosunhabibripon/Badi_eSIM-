@@ -17,7 +17,7 @@ while building and reviewing this codebase with AI coding assistants.
 > reviewability - it is not a literal replay of the original session-by-session history.
 > See `docs/ai-transcripts/` for the real session records.
 
-> **Frontend:** not built yet. Everything below is the backend API, reachable directly
+> **Frontend:** built with React + TypeScript + Vite + Tailwind CSS. See the *Frontend* section near the end.
 > with `curl`/Postman or through the interactive docs at `/docs`. See the *Frontend*
 > section near the end.
 

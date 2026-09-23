@@ -7,8 +7,28 @@ interface UseTicketSocketOptions {
   onMessage: (message: TicketMessageResponse) => void;
 }
 
+type ConnectionState = "live" | "reconnecting" | "offline";
+
+const LABELS: Record<ConnectionState, string> = {
+  live: "Live",
+  reconnecting: "Reconnecting...",
+  offline: "Offline",
+};
+
+const COLORS: Record<ConnectionState, string> = {
+  live: "text-green-600",
+  reconnecting: "text-amber-600",
+  offline: "text-slate-400",
+};
+
+const DOT_COLORS: Record<ConnectionState, string> = {
+  live: "bg-green-500",
+  reconnecting: "bg-amber-500",
+  offline: "bg-slate-400",
+};
+
 export function useTicketSocket({ ticketId, userId, onMessage }: UseTicketSocketOptions) {
-  const [connectionState, setConnectionState] = useState<"live" | "reconnecting" | "offline">("offline");
+  const [connectionState, setConnectionState] = useState<ConnectionState>("offline");
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const backoffRef = useRef(1);
@@ -97,5 +117,10 @@ export function useTicketSocket({ ticketId, userId, onMessage }: UseTicketSocket
     };
   }, [ticketId, userId, closeSocket]);
 
-  return { connectionState };
+  return {
+    connectionState,
+    connectionLabel: LABELS[connectionState],
+    connectionColor: COLORS[connectionState],
+    connectionDot: DOT_COLORS[connectionState],
+  };
 }

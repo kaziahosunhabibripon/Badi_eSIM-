@@ -1,6 +1,19 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 
-let _userId: number | null = null;
+function loadStoredUserId(): number | null {
+  try {
+    const raw = sessionStorage.getItem("demo_user");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { id?: number };
+    return typeof parsed.id === "number" ? parsed.id : null;
+  } catch {
+    return null;
+  }
+}
+
+// Seeded from sessionStorage so a page reload doesn't wipe the identity out from under
+// in-flight requests before useIdentity's own effect has a chance to call setUserId again.
+let _userId: number | null = loadStoredUserId();
 let _onUnauthorized: (() => void) | null = null;
 
 export function setUserId(id: number | null): void {

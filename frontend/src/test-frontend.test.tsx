@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { TicketDetailPage } from "./pages/TicketDetailPage";
-import { CreateTicketPage } from "./pages/CreateTicketPage";
+import { CreateTicketModal } from "./components/CreateTicketModal";
 import { TicketListPage } from "./pages/TicketListPage";
 import { StatusBadge } from "./components/StatusBadge";
 import { PriorityBadge } from "./components/PriorityBadge";
@@ -185,7 +185,10 @@ describe("ApiError mapping", () => {
       status: 403,
       details: { email: "test@example.com" },
     });
-    renderWithIdentity(<CreateTicketPage />, mockUserCustomer);
+    renderWithIdentity(
+      <CreateTicketModal open onClose={() => {}} onCreated={() => {}} />,
+      mockUserCustomer
+    );
     const emailInput = screen.getByLabelText("Customer e-mail", { exact: false });
     const categorySelect = screen.getByLabelText("Category", { exact: false });
     const subjectInput = screen.getByLabelText("Subject", { exact: false });

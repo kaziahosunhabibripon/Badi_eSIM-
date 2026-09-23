@@ -1,10 +1,5 @@
 # AI-assisted development process
 
-The assignment requires the complete AI coding transcript or session export for every
-AI tool used on this project, because a one-shot AI-generated submission is not
-acceptable on its own. This file documents *how* three different AI tools were used;
-the actual, unedited transcripts belong next to it as separate files (see below).
-
 ## Tools used and their roles
 
 ### Kilo Code — primary implementation
@@ -39,13 +34,7 @@ a significant share of the final code was written directly by Claude under human
 direction, review and correction, the same as Kilo Code's role. The actual
 `claude-code-session.md` transcript is the accurate record of which parts.
 
-## My role (the author)
 
-Across all three tools, I owned: understanding the assignment and deciding the
-implementation direction, giving each tool its instructions, reviewing what came back
-against the requirements and the running application (not just reading the diff),
-deciding which AI suggestions were correct or appropriate, catching and correcting AI
-mistakes, and final integration and submission.
 
 ## Development flow
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Plus, Search } from "lucide-react";
 import { Select } from "../components/ui/Select";
@@ -20,7 +20,6 @@ export function TicketListPage() {
   const [agents, setAgents] = useState<User[]>([]);
   const [agentsLoading, setAgentsLoading] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const status = searchParams.get("status") ?? "";
   const priority = searchParams.get("priority") ?? "";
@@ -28,6 +27,11 @@ export function TicketListPage() {
   const assignedAgentId = searchParams.get("assigned_agent_id") ?? "";
   const search = searchParams.get("search") ?? "";
   const page = Number(searchParams.get("page")) || 1;
+  const [searchInput, setSearchInput] = useState(search);
+
+  useEffect(() => {
+    setSearchInput(search);
+  }, [search]);
 
   const updateParams = useCallback(
     (updates: Record<string, string>) => {
@@ -132,16 +136,12 @@ export function TicketListPage() {
           <input
             type="search"
             placeholder="Search tickets..."
-            value={search}
-            onChange={(e) => {
-              if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-              debounceTimerRef.current = setTimeout(() => {
-                updateParams({ search: e.target.value });
-              }, 300);
-            }}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onBlur={(e) => updateParams({ search: e.target.value })}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+                (e.target as HTMLInputElement).blur();
                 updateParams({ search: (e.target as HTMLInputElement).value });
               }
             }}

@@ -352,7 +352,7 @@ export function TicketDetailPage() {
 
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
             {isAgent && (
-              <div className="flex gap-1 px-2.5 pt-2.5">
+              <div className="flex gap-1 p-2.5">
                 <button
                   type="button"
                   onClick={() => setComposerType("REPLY")}
@@ -373,14 +373,16 @@ export function TicketDetailPage() {
                 </button>
               </div>
             )}
-            <textarea
-              value={composerBody}
-              onChange={(e) => setComposerBody(e.target.value)}
-              placeholder={isAgent ? (composerType === "REPLY" ? "Write a reply…" : "Write an internal note…") : "Write a reply…"}
-              aria-label={composerType === "REPLY" ? "Reply" : "Internal note"}
-              rows={3}
-              className="w-full resize-y px-4 py-3 text-[13.5px] focus:outline-none placeholder:text-slate-400"
-            />
+            <div className="px-4 pt-1">
+              <textarea
+                value={composerBody}
+                onChange={(e) => setComposerBody(e.target.value)}
+                placeholder={isAgent ? (composerType === "REPLY" ? "Write a reply…" : "Write an internal note…") : "Write a reply…"}
+                aria-label={composerType === "REPLY" ? "Reply" : "Internal note"}
+                rows={3}
+                className="w-full resize-y px-2 py-2 text-[13.5px] focus:outline-none placeholder:text-slate-400 border border-slate-200 rounded-md focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600/30"
+              />
+            </div>
             <div className="flex items-center justify-between px-4 py-2.5 border-t border-slate-100">
               <span className="text-[11.5px] text-slate-400">
                 {isAgent && composerType === "INTERNAL_NOTE" ? "Only visible to agents" : "Customer will be notified"}

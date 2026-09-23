@@ -52,7 +52,7 @@ The real session exports from each tool, as their own files:
 
 ```
 docs/ai-transcripts/
-├── README.md                  (this file)
+├── README.md                 
 ├── claude-code-session.md
 ├── kilo-code-session.md
 └── cline-session.md
